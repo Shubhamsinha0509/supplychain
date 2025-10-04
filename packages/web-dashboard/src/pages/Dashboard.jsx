@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { Plus, Package, TrendingUp, AlertCircle, CheckCircle, Clock, MapPin } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
+import { Plus, Package, TrendingUp, AlertCircle, CheckCircle, Clock, MapPin, RefreshCw } from 'lucide-react'
 import { useUser } from '../contexts/UserContext'
 
 const Dashboard = () => {
   const { user } = useUser()
+  const location = useLocation()
   const [batches, setBatches] = useState([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
 
   // Fetch user-specific batches from API
   useEffect(() => {
@@ -25,6 +27,9 @@ const Dashboard = () => {
         } else {
           throw new Error('Failed to fetch batches')
         }
+      } catch (error) {
+        console.error('Error fetching batches:', error)
+        setBatches([])
       } finally {
         setLoading(false)
       }
@@ -32,6 +37,56 @@ const Dashboard = () => {
 
     fetchBatches()
   }, [user?.id])
+
+  // Refresh batches when component becomes visible (e.g., after creating a batch)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user?.id) {
+        const fetchBatches = async () => {
+          try {
+            const response = await fetch(`http://localhost:3000/api/batches/user/${user.id}`)
+            if (response.ok) {
+              const data = await response.json()
+              setBatches(data.data || [])
+            }
+          } catch (error) {
+            console.error('Error refreshing batches:', error)
+          }
+        }
+        fetchBatches()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [user?.id])
+
+  // Handle refresh from navigation state
+  useEffect(() => {
+    if (location.state?.refresh && user?.id) {
+      refreshBatches()
+      // Clear the refresh state
+      window.history.replaceState({}, document.title)
+    }
+  }, [location.state?.refresh, user?.id])
+
+  // Manual refresh function
+  const refreshBatches = async () => {
+    if (!user?.id) return
+    
+    setRefreshing(true)
+    try {
+      const response = await fetch(`http://localhost:3000/api/batches/user/${user.id}`)
+      if (response.ok) {
+        const data = await response.json()
+        setBatches(data.data || [])
+      }
+    } catch (error) {
+      console.error('Error refreshing batches:', error)
+    } finally {
+      setRefreshing(false)
+    }
+  }
 
   const getStatusBadge = (status) => {
     const statusClasses = {
@@ -84,10 +139,20 @@ const Dashboard = () => {
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-gray-600 mt-2">Manage your agricultural produce batches</p>
         </div>
-        <Link to="/dashboard/new" className="btn-primary inline-flex items-center">
-          <Plus className="h-4 w-4 mr-2" />
-          New Batch
-        </Link>
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={refreshBatches}
+            disabled={refreshing}
+            className="btn-outline inline-flex items-center hover:bg-gray-50 disabled:opacity-50"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+          <Link to="/dashboard/new" className="btn-primary inline-flex items-center">
+            <Plus className="h-4 w-4 mr-2" />
+            New Batch
+          </Link>
+        </div>
       </div>
 
       {/* Stats Grid */}

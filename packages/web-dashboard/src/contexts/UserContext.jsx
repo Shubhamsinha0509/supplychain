@@ -16,13 +16,13 @@ export const UserProvider = ({ children }) => {
 
   useEffect(() => {
     // Check for existing user session on app load
-    const savedUser = localStorage.getItem('supplychain_user')
+    const savedUser = localStorage.getItem('user')
     if (savedUser) {
       try {
         setUser(JSON.parse(savedUser))
       } catch (error) {
         console.error('Error parsing saved user:', error)
-        localStorage.removeItem('supplychain_user')
+        localStorage.removeItem('user')
       }
     }
     setIsLoading(false)
@@ -30,18 +30,24 @@ export const UserProvider = ({ children }) => {
 
   const login = (userData) => {
     setUser(userData)
-    localStorage.setItem('supplychain_user', JSON.stringify(userData))
+    localStorage.setItem('user', JSON.stringify(userData))
   }
 
   const logout = () => {
     setUser(null)
-    localStorage.removeItem('supplychain_user')
+    localStorage.removeItem('user')
   }
 
   const updateUser = (updatedData) => {
     const newUser = { ...user, ...updatedData }
     setUser(newUser)
-    localStorage.setItem('supplychain_user', JSON.stringify(newUser))
+    localStorage.setItem('user', JSON.stringify(newUser))
+  }
+
+  const clearAllData = () => {
+    setUser(null)
+    localStorage.removeItem('user')
+    localStorage.removeItem('supplychain_user') // Clear old key if it exists
   }
 
   const value = {
@@ -50,6 +56,7 @@ export const UserProvider = ({ children }) => {
     login,
     logout,
     updateUser,
+    clearAllData,
     isAuthenticated: !!user
   }
 

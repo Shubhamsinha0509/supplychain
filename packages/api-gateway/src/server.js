@@ -67,7 +67,8 @@ app.get('/health', (req, res) => {
 app.get('/api/batches/user/:userId', (req, res) => {
   const { userId } = req.params;
   
-  const userBatches = batches.filter(batch => batch.userId === userId);
+  // Convert userId to number for comparison since it's stored as a number
+  const userBatches = batches.filter(batch => batch.userId === parseInt(userId));
   
   res.json({
     success: true,
@@ -82,6 +83,17 @@ app.get('/api/batches', (req, res) => {
     success: true,
     data: batches,
     count: batches.length
+  });
+});
+
+// Clear all batches (for testing purposes)
+app.delete('/api/batches', (req, res) => {
+  batches = [];
+  nextId = 1;
+  res.json({
+    success: true,
+    message: 'All batches cleared',
+    count: 0
   });
 });
 
@@ -154,7 +166,7 @@ app.post('/api/batches', (req, res) => {
       qualityGrade,
       farmer: farmer ? farmer.trim() : 'Unknown Farmer',
       notes: notes ? notes.trim() : '',
-      userId: userId || null,
+      userId: userId ? parseInt(userId) : null,
       userEmail: userEmail || null,
       createdAt: new Date().toISOString()
     };

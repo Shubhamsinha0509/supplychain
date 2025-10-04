@@ -49,7 +49,8 @@ const CreateBatch = () => {
         console.log('Batch created:', result)
         // Show success message
         alert('Batch created successfully!')
-        navigate('/dashboard')
+        // Navigate to dashboard and trigger refresh
+        navigate('/dashboard', { state: { refresh: true } })
       } else {
         throw new Error('Failed to create batch')
       }

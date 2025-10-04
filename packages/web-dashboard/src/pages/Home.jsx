@@ -1,18 +1,61 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { Package, Scan, Shield, TrendingUp, ArrowRight, CheckCircle, Sparkles, Zap, Globe } from 'lucide-react'
 import { useUser } from '../contexts/UserContext'
 
 const Home = () => {
-  const { isAuthenticated } = useUser()
+  const { isAuthenticated, user } = useUser()
+  const location = useLocation()
   const [isVisible, setIsVisible] = useState(false)
   const [animatedStats, setAnimatedStats] = useState([0, 0, 0, 0])
+  const [userBatches, setUserBatches] = useState([])
+
+  // Fetch user batches for stats calculation
+  useEffect(() => {
+    const fetchUserBatches = async () => {
+      if (!user?.id) {
+        setUserBatches([])
+        return
+      }
+      
+      try {
+        const response = await fetch(`http://localhost:3000/api/batches/user/${user.id}`)
+        if (response.ok) {
+          const data = await response.json()
+          setUserBatches(data.data || [])
+        }
+      } catch (error) {
+        console.error('Error fetching user batches:', error)
+        setUserBatches([])
+      }
+    }
+
+    fetchUserBatches()
+  }, [user?.id])
 
   useEffect(() => {
     setIsVisible(true)
     
-    // Animate stats
-    const targetStats = [1234, 456, 7890, 98.5]
+    // Calculate real stats from user data
+    const activeBatches = userBatches.length
+    const farmersRegistered = userBatches.length > 0 ? 1 : 0 // User is the farmer
+    const productsTracked = userBatches.length
+    
+    // Calculate quality score based on quality grades
+    let qualityScore = 0
+    if (userBatches.length > 0) {
+      const qualityGrades = userBatches.map(batch => {
+        switch (batch.qualityGrade) {
+          case 'A': return 100
+          case 'B': return 80
+          case 'C': return 60
+          default: return 0
+        }
+      })
+      qualityScore = Math.round(qualityGrades.reduce((sum, grade) => sum + grade, 0) / qualityGrades.length)
+    }
+    
+    const targetStats = [activeBatches, farmersRegistered, productsTracked, qualityScore]
     const duration = 2000
     const steps = 60
     const stepDuration = duration / steps
@@ -30,9 +73,29 @@ const Home = () => {
         setAnimatedStats(targetStats)
       }
     }, stepDuration)
-    
+
     return () => clearInterval(interval)
-  }, [])
+  }, [userBatches])
+
+  // Refresh stats when returning from batch creation
+  useEffect(() => {
+    if (location.state?.refresh && user?.id) {
+      const fetchUserBatches = async () => {
+        try {
+          const response = await fetch(`http://localhost:3000/api/batches/user/${user.id}`)
+          if (response.ok) {
+            const data = await response.json()
+            setUserBatches(data.data || [])
+          }
+        } catch (error) {
+          console.error('Error refreshing user batches:', error)
+        }
+      }
+      fetchUserBatches()
+      // Clear the refresh state
+      window.history.replaceState({}, document.title)
+    }
+  }, [location.state?.refresh, user?.id])
 
   const features = [
     {
@@ -66,10 +129,10 @@ const Home = () => {
   ]
 
   const stats = [
-    { label: 'Active Batches', value: animatedStats[0].toLocaleString(), icon: Package },
-    { label: 'Farmers Registered', value: animatedStats[1].toLocaleString(), icon: Globe },
+    { label: 'My Batches', value: animatedStats[0].toLocaleString(), icon: Package },
     { label: 'Products Tracked', value: animatedStats[2].toLocaleString(), icon: Zap },
-    { label: 'Quality Score', value: `${animatedStats[3]}%`, icon: CheckCircle }
+    { label: 'Quality Score', value: `${animatedStats[3]}%`, icon: CheckCircle },
+    { label: 'Status', value: userBatches.length > 0 ? 'Active' : 'Ready', icon: Globe }
   ]
 
   return (
