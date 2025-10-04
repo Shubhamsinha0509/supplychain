@@ -1,17 +1,21 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import { useUser } from '../contexts/UserContext'
 
 const Login = () => {
   const { login } = useUser()
   const navigate = useNavigate()
+  const location = useLocation()
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   })
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  // Get the page user was trying to access before login
+  const from = location.state?.from?.pathname || '/dashboard'
 
   const handleChange = (e) => {
     setFormData({
@@ -41,7 +45,7 @@ const Login = () => {
       
       login(userData)
       setLoading(false)
-      navigate('/dashboard')
+      navigate(from, { replace: true })
     }, 1000)
   }
 

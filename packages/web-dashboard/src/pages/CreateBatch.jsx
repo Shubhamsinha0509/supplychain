@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Package, Save } from 'lucide-react'
+import { useUser } from '../contexts/UserContext'
 
 const CreateBatch = () => {
   const navigate = useNavigate()
+  const { user } = useUser()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     produceType: '',
@@ -28,12 +30,18 @@ const CreateBatch = () => {
     setLoading(true)
 
     try {
+      const batchData = {
+        ...formData,
+        userId: user?.id,
+        userEmail: user?.email
+      }
+      
       const response = await fetch('http://localhost:3000/api/batches', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(batchData)
       })
 
       if (response.ok) {

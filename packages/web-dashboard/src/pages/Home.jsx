@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Package, Scan, Shield, TrendingUp, ArrowRight, CheckCircle, Sparkles, Zap, Globe } from 'lucide-react'
+import { useUser } from '../contexts/UserContext'
 
 const Home = () => {
+  const { isAuthenticated } = useUser()
   const [isVisible, setIsVisible] = useState(false)
   const [animatedStats, setAnimatedStats] = useState([0, 0, 0, 0])
 
@@ -104,14 +106,29 @@ const Home = () => {
           </p>
           
           <div className={`flex flex-col sm:flex-row gap-4 justify-center transition-all duration-1000 delay-1100 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-            <Link to="/dashboard" className="btn-primary inline-flex items-center group hover:scale-105 transition-all duration-300">
-              Get Started
-              <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
-            </Link>
-            <Link to="/scan" className="btn-outline inline-flex items-center group hover:scale-105 transition-all duration-300">
-              Scan QR Code
-              <Scan className="ml-2 h-4 w-4 group-hover:rotate-12 transition-transform duration-300" />
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <Link to="/dashboard" className="btn-primary inline-flex items-center group hover:scale-105 transition-all duration-300">
+                  Go to Dashboard
+                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
+                </Link>
+                <Link to="/scan" className="btn-outline inline-flex items-center group hover:scale-105 transition-all duration-300">
+                  Scan QR Code
+                  <Scan className="ml-2 h-4 w-4 group-hover:rotate-12 transition-transform duration-300" />
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link to="/register" className="btn-primary inline-flex items-center group hover:scale-105 transition-all duration-300">
+                  Get Started
+                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
+                </Link>
+                <Link to="/login" className="btn-outline inline-flex items-center group hover:scale-105 transition-all duration-300">
+                  Sign In
+                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </section>

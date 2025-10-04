@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Menu, X, Package, Scan, User, LogOut, Home, BarChart3, FileText, Settings } from 'lucide-react'
 import { useUser } from '../contexts/UserContext'
@@ -9,13 +9,30 @@ const Navbar = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, logout, isAuthenticated } = useUser()
+  const userMenuRef = useRef(null)
+
+  // Close user menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setShowUserMenu(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
 
   const navigation = [
     { name: 'Home', href: '/', icon: Home },
-    { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
-    { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
-    { name: 'Reports', href: '/dashboard/reports', icon: FileText },
-    { name: 'Scan QR', href: '/scan', icon: Scan },
+    ...(isAuthenticated ? [
+      { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
+      { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+      { name: 'Reports', href: '/dashboard/reports', icon: FileText },
+      { name: 'Scan QR', href: '/scan', icon: Scan },
+    ] : [])
   ]
 
   const handleLogout = () => {
@@ -64,7 +81,7 @@ const Navbar = () => {
           {/* User Menu */}
           <div className="hidden md:flex items-center space-x-4">
             {isAuthenticated ? (
-              <div className="relative">
+              <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   className="flex items-center space-x-2 text-gray-700 hover:text-primary-600 transition-colors duration-200"

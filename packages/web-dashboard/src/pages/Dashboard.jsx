@@ -1,68 +1,37 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus, Package, TrendingUp, AlertCircle, CheckCircle, Clock, MapPin } from 'lucide-react'
+import { useUser } from '../contexts/UserContext'
 
 const Dashboard = () => {
+  const { user } = useUser()
   const [batches, setBatches] = useState([])
   const [loading, setLoading] = useState(true)
 
-  // Fetch batches from API
+  // Fetch user-specific batches from API
   useEffect(() => {
     const fetchBatches = async () => {
+      if (!user?.id) {
+        setBatches([])
+        setLoading(false)
+        return
+      }
+      
       try {
-        const response = await fetch('http://localhost:3000/api/batches')
+        const response = await fetch(`http://localhost:3000/api/batches/user/${user.id}`)
         if (response.ok) {
           const data = await response.json()
           setBatches(data.data || [])
         } else {
           throw new Error('Failed to fetch batches')
         }
-      } catch (error) {
-        console.error('Error fetching batches:', error)
-        // Use mock data as fallback
-        const mockBatches = [
-          {
-            id: 1,
-            batchId: 'BCH001',
-            produceType: 'Tomatoes',
-            quantity: 1000,
-            status: 'REGISTERED',
-            harvestDate: '2024-01-15',
-            location: 'Farm A, California',
-            qualityGrade: 'A',
-            createdAt: '2024-01-15T10:00:00Z'
-          },
-          {
-            id: 2,
-            batchId: 'BCH002',
-            produceType: 'Wheat',
-            quantity: 2000,
-            status: 'IN_TRANSIT',
-            harvestDate: '2024-01-10',
-            location: 'Transport Hub',
-            qualityGrade: 'B',
-            createdAt: '2024-01-10T08:00:00Z'
-          },
-          {
-            id: 3,
-            batchId: 'BCH003',
-            produceType: 'Apples',
-            quantity: 500,
-            status: 'AT_WHOLESALER',
-            harvestDate: '2024-01-05',
-            location: 'Wholesale Market',
-            qualityGrade: 'A',
-            createdAt: '2024-01-05T12:00:00Z'
-          }
-        ]
-        setBatches(mockBatches)
       } finally {
         setLoading(false)
       }
     }
 
     fetchBatches()
-  }, [])
+  }, [user?.id])
 
   const getStatusBadge = (status) => {
     const statusClasses = {

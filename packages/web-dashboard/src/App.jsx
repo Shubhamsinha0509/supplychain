@@ -1,6 +1,7 @@
 import React from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { UserProvider } from './contexts/UserContext'
+import ProtectedRoute from './components/ProtectedRoute'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import Home from './pages/Home'
@@ -22,15 +23,45 @@ function App() {
         <main className="container mx-auto px-4 py-8">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/dashboard/new" element={<CreateBatch />} />
-            <Route path="/dashboard/analytics" element={<Analytics />} />
-            <Route path="/dashboard/reports" element={<QualityReports />} />
-            <Route path="/batch/:id" element={<BatchDetails />} />
-            <Route path="/scan" element={<QRScanner />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/profile" element={<Profile />} />
+            
+            {/* Protected Routes */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/new" element={
+              <ProtectedRoute>
+                <CreateBatch />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/analytics" element={
+              <ProtectedRoute>
+                <Analytics />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/reports" element={
+              <ProtectedRoute>
+                <QualityReports />
+              </ProtectedRoute>
+            } />
+            <Route path="/batch/:id" element={
+              <ProtectedRoute>
+                <BatchDetails />
+              </ProtectedRoute>
+            } />
+            <Route path="/scan" element={
+              <ProtectedRoute>
+                <QRScanner />
+              </ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } />
           </Routes>
         </main>
         <Footer />

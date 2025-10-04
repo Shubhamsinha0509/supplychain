@@ -6,37 +6,9 @@ const rateLimit = require('express-rate-limit');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// In-memory storage for batches
-let batches = [
-  {
-    id: 1,
-    batchId: 'BCH001',
-    produceType: 'Tomatoes',
-    quantity: 1000,
-    status: 'REGISTERED',
-    harvestDate: '2024-01-15',
-    location: 'Farm A, California',
-    qualityGrade: 'A',
-    farmer: 'John Doe',
-    notes: 'Premium quality tomatoes',
-    createdAt: '2024-01-15T10:00:00Z'
-  },
-  {
-    id: 2,
-    batchId: 'BCH002',
-    produceType: 'Wheat',
-    quantity: 2000,
-    status: 'IN_TRANSIT',
-    harvestDate: '2024-01-10',
-    location: 'Transport Hub',
-    qualityGrade: 'B',
-    farmer: 'Jane Smith',
-    notes: 'Organic wheat batch',
-    createdAt: '2024-01-10T08:00:00Z'
-  }
-];
-
-let nextId = 3;
+// In-memory storage for batches (empty by default)
+let batches = [];
+let nextId = 1;
 
 // Middleware
 app.use(helmet());
@@ -91,10 +63,25 @@ app.get('/health', (req, res) => {
 });
 
 // API routes
+// Get batches filtered by user
+app.get('/api/batches/user/:userId', (req, res) => {
+  const { userId } = req.params;
+  
+  const userBatches = batches.filter(batch => batch.userId === userId);
+  
+  res.json({
+    success: true,
+    data: userBatches,
+    count: userBatches.length
+  });
+});
+
+// Get all batches (for admin purposes)
 app.get('/api/batches', (req, res) => {
   res.json({
     success: true,
-    data: batches
+    data: batches,
+    count: batches.length
   });
 });
 
@@ -117,7 +104,7 @@ app.get('/api/batches/:id', (req, res) => {
 
 app.post('/api/batches', (req, res) => {
   try {
-    const { produceType, quantity, harvestDate, location, qualityGrade, farmer, notes } = req.body;
+    const { produceType, quantity, harvestDate, location, qualityGrade, farmer, notes, userId, userEmail } = req.body;
     
     // Input validation
     if (!produceType || !quantity || !harvestDate || !location || !qualityGrade) {
@@ -167,6 +154,8 @@ app.post('/api/batches', (req, res) => {
       qualityGrade,
       farmer: farmer ? farmer.trim() : 'Unknown Farmer',
       notes: notes ? notes.trim() : '',
+      userId: userId || null,
+      userEmail: userEmail || null,
       createdAt: new Date().toISOString()
     };
     
