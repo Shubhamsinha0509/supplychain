@@ -12,11 +12,11 @@ describe("SupplyChain Contract", function () {
   let government;
   let addrs;
 
-  const FARMER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("FARMER_ROLE"));
-  const TRANSPORTER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("TRANSPORTER_ROLE"));
-  const WHOLESALER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("WHOLESALER_ROLE"));
-  const RETAILER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("RETAILER_ROLE"));
-  const GOVERNMENT_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("GOVERNMENT_ROLE"));
+  const FARMER_ROLE = ethers.keccak256(ethers.toUtf8Bytes("FARMER_ROLE"));
+  const TRANSPORTER_ROLE = ethers.keccak256(ethers.toUtf8Bytes("TRANSPORTER_ROLE"));
+  const WHOLESALER_ROLE = ethers.keccak256(ethers.toUtf8Bytes("WHOLESALER_ROLE"));
+  const RETAILER_ROLE = ethers.keccak256(ethers.toUtf8Bytes("RETAILER_ROLE"));
+  const GOVERNMENT_ROLE = ethers.keccak256(ethers.toUtf8Bytes("GOVERNMENT_ROLE"));
 
   beforeEach(async function () {
     [owner, farmer, transporter, wholesaler, retailer, government, ...addrs] = await ethers.getSigners();
@@ -24,12 +24,12 @@ describe("SupplyChain Contract", function () {
     // Deploy SupplyChain contract
     const SupplyChain = await ethers.getContractFactory("SupplyChain");
     supplyChain = await SupplyChain.deploy();
-    await supplyChain.deployed();
+    await supplyChain.waitForDeployment();
 
     // Deploy Pricing contract
     const Pricing = await ethers.getContractFactory("Pricing");
     pricing = await Pricing.deploy();
-    await pricing.deployed();
+    await pricing.waitForDeployment();
 
     // Setup roles
     await supplyChain.grantRole(FARMER_ROLE, farmer.address);
@@ -107,7 +107,7 @@ describe("SupplyChain Contract", function () {
           "A",
           "QmTestHash"
         )
-      ).to.be.revertedWith("AccessControl: account");
+      ).to.be.revertedWith(/AccessControl: account/);
     });
   });
 
@@ -213,7 +213,7 @@ describe("SupplyChain Contract", function () {
     });
 
     it("Should allow wholesaler to set batch price", async function () {
-      const price = ethers.utils.parseEther("10");
+      const price = ethers.parseEther("10");
       
       const tx = await supplyChain.connect(wholesaler).setBatchPrice(batchId, price);
       
@@ -226,7 +226,7 @@ describe("SupplyChain Contract", function () {
     });
 
     it("Should allow government to set fair price range", async function () {
-      const maxPrice = ethers.utils.parseEther("15");
+      const maxPrice = ethers.parseEther("15");
       
       const tx = await supplyChain.connect(government).setFairPriceRange("Tomatoes", maxPrice);
       
@@ -237,11 +237,11 @@ describe("SupplyChain Contract", function () {
 
     it("Should reject price exceeding fair range", async function () {
       // Set fair price range
-      const maxPrice = ethers.utils.parseEther("15");
+      const maxPrice = ethers.parseEther("15");
       await supplyChain.connect(government).setFairPriceRange("Tomatoes", maxPrice);
 
       // Try to set price above fair range
-      const highPrice = ethers.utils.parseEther("20");
+      const highPrice = ethers.parseEther("20");
       await expect(
         supplyChain.connect(wholesaler).setBatchPrice(batchId, highPrice)
       ).to.be.revertedWith("Price exceeds fair price range");
@@ -295,7 +295,7 @@ describe("SupplyChain Contract", function () {
       
       await expect(
         supplyChain.connect(farmer).grantRole(FARMER_ROLE, newFarmer.address)
-      ).to.be.revertedWith("AccessControl: account");
+      ).to.be.revertedWith(/AccessControl: account/);
     });
   });
 

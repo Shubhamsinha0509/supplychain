@@ -25,7 +25,12 @@ class QRGenerator {
         farmer,
         harvestDate,
         qualityGrade,
-        ipfsHash
+        quantity,
+        location,
+        status,
+        ipfsHash,
+        timestamp,
+        blockchain
       } = batchData;
 
       // Create QR payload
@@ -35,8 +40,12 @@ class QRGenerator {
         farmer,
         harvestDate,
         qualityGrade,
+        quantity,
+        location,
+        status,
         ipfsHash,
-        timestamp: new Date().toISOString()
+        timestamp: timestamp || new Date().toISOString(),
+        blockchain
       });
 
       // Generate QR code options
@@ -239,13 +248,18 @@ class QRGenerator {
         farmer: data.farmer,
         harvestDate: data.harvestDate,
         qualityGrade: data.qualityGrade,
+        quantity: data.quantity,
+        location: data.location,
+        status: data.status,
         ipfsHash: data.ipfsHash,
-        timestamp: data.timestamp
+        timestamp: data.timestamp,
+        blockchain: data.blockchain || null
       },
       urls: {
         scan: `${this.appBaseUrl}/scan/${data.batchId}`,
         api: `${this.apiBaseUrl}/api/batches/${data.batchId}`,
-        web: `${this.appBaseUrl}/batch/${data.batchId}`
+        web: `${this.appBaseUrl}/batch/${data.batchId}`,
+        blockchain: data.blockchain ? `${this.apiBaseUrl}/api/blockchain/batch/${data.batchId}` : null
       },
       signature: this.generateSignature(data)
     };

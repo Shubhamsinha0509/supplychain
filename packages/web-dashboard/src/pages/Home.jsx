@@ -164,8 +164,10 @@ const Home = () => {
           </div>
           
           <p className={`text-xl text-gray-600 mb-8 max-w-2xl mx-auto transition-all duration-1000 delay-900 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-            Track agricultural produce from farm to consumer with complete transparency, 
-            quality assurance, and fair pricing using blockchain technology.
+            {isAuthenticated && user?.userType?.toLowerCase() === 'farmer' 
+              ? 'Welcome back! Manage your agricultural produce batches and track them through the supply chain with complete transparency.'
+              : 'Track agricultural produce from farm to consumer with complete transparency, quality assurance, and fair pricing using blockchain technology.'
+            }
           </p>
           
           <div className={`flex flex-col sm:flex-row gap-4 justify-center transition-all duration-1000 delay-1100 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
@@ -175,10 +177,13 @@ const Home = () => {
                   Go to Dashboard
                   <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
                 </Link>
-                <Link to="/scan" className="btn-outline inline-flex items-center group hover:scale-105 transition-all duration-300">
-                  Scan QR Code
-                  <Scan className="ml-2 h-4 w-4 group-hover:rotate-12 transition-transform duration-300" />
-                </Link>
+                {/* Only show Scan QR Code button for non-farmers */}
+                {user?.userType?.toLowerCase() !== 'farmer' && (
+                  <Link to="/scan" className="btn-outline inline-flex items-center group hover:scale-105 transition-all duration-300">
+                    Scan QR Code
+                    <Scan className="ml-2 h-4 w-4 group-hover:rotate-12 transition-transform duration-300" />
+                  </Link>
+                )}
               </>
             ) : (
               <>

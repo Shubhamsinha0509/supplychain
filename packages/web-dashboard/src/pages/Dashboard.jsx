@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Plus, Package, TrendingUp, AlertCircle, CheckCircle, Clock, MapPin, RefreshCw } from 'lucide-react'
+import { Plus, Package, TrendingUp, AlertCircle, CheckCircle, Clock, MapPin, RefreshCw, QrCode, Download, DollarSign } from 'lucide-react'
 import { useUser } from '../contexts/UserContext'
 
 const Dashboard = () => {
@@ -9,6 +9,8 @@ const Dashboard = () => {
   const [batches, setBatches] = useState([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [showQRModal, setShowQRModal] = useState(false)
+  const [selectedBatch, setSelectedBatch] = useState(null)
 
   // Fetch user-specific batches from API
   useEffect(() => {
@@ -85,6 +87,47 @@ const Dashboard = () => {
       console.error('Error refreshing batches:', error)
     } finally {
       setRefreshing(false)
+    }
+  }
+
+  const generateQRCode = async (batch) => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/batches/${batch.id}/qr`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        if (result.success) {
+          // Update the batch with QR code data
+          setBatches(prevBatches => 
+            prevBatches.map(b => 
+              b.id === batch.id 
+                ? { ...b, qrCode: result.data.qrCode }
+                : b
+            )
+          )
+          setSelectedBatch({ ...batch, qrCode: result.data.qrCode })
+          setShowQRModal(true)
+        }
+      } else {
+        alert('Failed to generate QR code')
+      }
+    } catch (error) {
+      console.error('Error generating QR code:', error)
+      alert('Error generating QR code')
+    }
+  }
+
+  const showQRCode = (batch) => {
+    if (batch.qrCode) {
+      setSelectedBatch(batch)
+      setShowQRModal(true)
+    } else {
+      generateQRCode(batch)
     }
   }
 
@@ -226,6 +269,13 @@ const Dashboard = () => {
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => showQRCode(batch)}
+                      className="flex items-center space-x-1 text-green-600 hover:text-green-700 font-medium px-3 py-1 rounded-lg hover:bg-green-50 transition-colors"
+                    >
+                      <QrCode className="h-4 w-4" />
+                      <span>QR Code</span>
+                    </button>
                     <Link 
                       to={`/batch/${batch.id}`}
                       className="text-primary-600 hover:text-primary-700 font-medium"
@@ -264,6 +314,19 @@ const Dashboard = () => {
           </Link>
         </div>
 
+        {user?.userType?.toLowerCase() !== 'farmer' && (
+          <div className="card text-center">
+            <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+              <DollarSign className="h-6 w-6 text-yellow-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Manage Pricing</h3>
+            <p className="text-gray-600 mb-4">Set and manage prices for batches</p>
+            <Link to="/pricing" className="btn-outline">
+              Manage Pricing
+            </Link>
+          </div>
+        )}
+
         <div className="card text-center">
           <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
             <AlertCircle className="h-6 w-6 text-purple-600" />
@@ -275,6 +338,73 @@ const Dashboard = () => {
           </Link>
         </div>
       </div>
+
+      {/* QR Code Modal */}
+      {showQRModal && selectedBatch && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-4">
+                <QrCode className="h-8 w-8 text-green-600 mr-2" />
+                <h3 className="text-2xl font-bold text-gray-900">Batch QR Code</h3>
+              </div>
+              
+              <p className="text-gray-600 mb-6">
+                Scan this QR code to track this batch in the supply chain.
+              </p>
+              
+              {/* QR Code Image */}
+              {selectedBatch.qrCode && (
+                <div className="mb-6">
+                  <img 
+                    src={selectedBatch.qrCode.qrCodeDataURL} 
+                    alt="Batch QR Code"
+                    className="mx-auto border-2 border-gray-200 rounded-lg"
+                    style={{ width: '250px', height: '250px' }}
+                  />
+                </div>
+              )}
+              
+              {/* Batch Info */}
+              <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
+                <h4 className="font-semibold text-gray-900 mb-2">Batch Information</h4>
+                <div className="space-y-1 text-sm text-gray-600">
+                  <p><span className="font-medium">Batch ID:</span> {selectedBatch.batchId}</p>
+                  <p><span className="font-medium">Produce:</span> {selectedBatch.produceType}</p>
+                  <p><span className="font-medium">Quantity:</span> {selectedBatch.quantity} kg</p>
+                  <p><span className="font-medium">Quality:</span> Grade {selectedBatch.qualityGrade}</p>
+                  <p><span className="font-medium">Location:</span> {selectedBatch.location}</p>
+                  <p><span className="font-medium">Status:</span> {selectedBatch.status.replace('_', ' ')}</p>
+                </div>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowQRModal(false)}
+                  className="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  Close
+                </button>
+                {selectedBatch.qrCode && (
+                  <button
+                    onClick={() => {
+                      const link = document.createElement('a')
+                      link.href = selectedBatch.qrCode.qrCodeDataURL
+                      link.download = `batch-${selectedBatch.batchId}-qr.png`
+                      link.click()
+                    }}
+                    className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download QR
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

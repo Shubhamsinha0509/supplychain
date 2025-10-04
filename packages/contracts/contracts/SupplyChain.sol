@@ -67,7 +67,7 @@ contract SupplyChain is AccessControl, ReentrancyGuard {
     
     // Pricing information
     mapping(uint256 => uint256) public batchPrices; // batchId => price in wei
-    mapping(uint256 => uint256) public fairPriceRange; // produceType hash => max fair price
+    mapping(bytes32 => uint256) public fairPriceRange; // produceType hash => max fair price
     
     // Events
     event BatchCreated(
@@ -212,7 +212,8 @@ contract SupplyChain is AccessControl, ReentrancyGuard {
         
         // Check if price is within fair range
         string memory produceType = batches[_batchId].produceType;
-        uint256 maxFairPrice = fairPriceRange[keccak256(abi.encodePacked(produceType))];
+        bytes32 produceTypeHash = keccak256(abi.encodePacked(produceType));
+        uint256 maxFairPrice = fairPriceRange[produceTypeHash];
         
         if (maxFairPrice > 0) {
             require(_price <= maxFairPrice, "Price exceeds fair price range");
@@ -233,7 +234,8 @@ contract SupplyChain is AccessControl, ReentrancyGuard {
     {
         require(_maxPrice > 0, "Max price must be greater than 0");
         
-        fairPriceRange[keccak256(abi.encodePacked(_produceType))] = _maxPrice;
+        bytes32 produceTypeHash = keccak256(abi.encodePacked(_produceType));
+        fairPriceRange[produceTypeHash] = _maxPrice;
         emit FairPriceRangeUpdated(_produceType, _maxPrice);
     }
 

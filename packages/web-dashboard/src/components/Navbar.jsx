@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Menu, X, Package, Scan, User, LogOut, Home, BarChart3, FileText, Settings } from 'lucide-react'
+import { Menu, X, Package, Scan, User, LogOut, Home, BarChart3, FileText, Settings, DollarSign } from 'lucide-react'
 import { useUser } from '../contexts/UserContext'
 
 const Navbar = () => {
@@ -31,7 +31,10 @@ const Navbar = () => {
       { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
       { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
       { name: 'Reports', href: '/dashboard/reports', icon: FileText },
-      { name: 'Scan QR', href: '/scan', icon: Scan },
+      // Only show Scan QR for non-farmers
+      ...(user?.userType?.toLowerCase() !== 'farmer' ? [{ name: 'Scan QR', href: '/scan', icon: Scan }] : []),
+      // Only show Pricing for non-farmers
+      ...(user?.userType?.toLowerCase() !== 'farmer' ? [{ name: 'Pricing', href: '/pricing', icon: DollarSign }] : []),
     ] : [])
   ]
 

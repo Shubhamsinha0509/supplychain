@@ -10,7 +10,8 @@ import CreateBatch from './pages/CreateBatch'
 import Analytics from './pages/Analytics'
 import QualityReports from './pages/QualityReports'
 import BatchDetails from './pages/BatchDetails'
-import QRScanner from './pages/QRScanner'
+import Scan from './pages/Scan'
+import Pricing from './pages/Pricing'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Profile from './pages/Profile'
@@ -54,7 +55,12 @@ function App() {
             } />
             <Route path="/scan" element={
               <ProtectedRoute>
-                <QRScanner />
+                <Scan />
+              </ProtectedRoute>
+            } />
+            <Route path="/pricing" element={
+              <ProtectedRoute>
+                <Pricing />
               </ProtectedRoute>
             } />
             <Route path="/profile" element={

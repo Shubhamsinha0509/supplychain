@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import { Package, MapPin, Clock, User, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react'
+import { Package, MapPin, Clock, User, TrendingUp, AlertCircle, CheckCircle, QrCode, Download } from 'lucide-react'
 
 const BatchDetails = () => {
   const { id } = useParams()
@@ -8,56 +8,58 @@ const BatchDetails = () => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      const mockBatch = {
-        id: parseInt(id),
-        batchId: 'BCH001',
-        produceType: 'Tomatoes',
-        quantity: 1000,
-        status: 'IN_TRANSIT',
-        harvestDate: '2024-01-15',
-        location: 'Transport Hub, California',
-        qualityGrade: 'A',
-        farmer: 'John Doe',
-        pricing: {
-          farmGatePrice: 2.50,
-          wholesalePrice: 3.20,
-          retailPrice: 4.50,
-          currency: 'USD'
-        },
-        events: [
-          {
-            id: 1,
-            type: 'REGISTERED',
-            description: 'Batch registered by farmer',
-            timestamp: '2024-01-15T10:00:00Z',
-            location: 'Farm A, California',
-            actor: 'John Doe'
-          },
-          {
-            id: 2,
-            type: 'IN_TRANSIT',
-            description: 'Batch picked up for transport',
-            timestamp: '2024-01-16T08:00:00Z',
-            location: 'Transport Hub, California',
-            actor: 'Transport Co.'
+    const fetchBatch = async () => {
+      try {
+        setLoading(true)
+        
+        // Fetch all batches and find the one with matching ID
+        const response = await fetch('http://localhost:3000/api/batches')
+        if (response.ok) {
+          const result = await response.json()
+          const foundBatch = result.data.find(b => b.id === parseInt(id))
+          
+          if (foundBatch) {
+            // Add some additional data for display
+            const batchWithDetails = {
+              ...foundBatch,
+              events: [
+                {
+                  id: 1,
+                  type: 'REGISTERED',
+                  description: 'Batch registered by farmer',
+                  timestamp: foundBatch.createdAt,
+                  location: foundBatch.location,
+                  actor: foundBatch.farmer
+                }
+              ],
+              qualityChecks: [
+                {
+                  id: 1,
+                  type: 'visual',
+                  passed: true,
+                  score: foundBatch.qualityGrade === 'A' ? 95 : foundBatch.qualityGrade === 'B' ? 85 : 75,
+                  timestamp: foundBatch.createdAt,
+                  performedBy: 'Quality Inspector'
+                }
+              ]
+            }
+            setBatch(batchWithDetails)
+          } else {
+            setBatch(null)
           }
-        ],
-        qualityChecks: [
-          {
-            id: 1,
-            type: 'visual',
-            passed: true,
-            score: 95,
-            timestamp: '2024-01-15T10:30:00Z',
-            performedBy: 'Quality Inspector'
-          }
-        ]
+        } else {
+          console.error('Failed to fetch batches')
+          setBatch(null)
+        }
+      } catch (error) {
+        console.error('Error fetching batch:', error)
+        setBatch(null)
+      } finally {
+        setLoading(false)
       }
-      setBatch(mockBatch)
-      setLoading(false)
-    }, 1000)
+    }
+
+    fetchBatch()
   }, [id])
 
   const getStatusBadge = (status) => {
@@ -156,7 +158,31 @@ const BatchDetails = () => {
                   <span className="text-lg font-semibold text-gray-900">{batch.location}</span>
                 </div>
               </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">Created Date</label>
+                <p className="text-lg font-semibold text-gray-900">
+                  {new Date(batch.createdAt).toLocaleDateString()}
+                </p>
+              </div>
             </div>
+
+            {/* Blockchain Verification */}
+            {batch.blockchain && batch.blockchain.onBlockchain && (
+              <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center mb-2">
+                  <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
+                  <h4 className="font-semibold text-green-800">Blockchain Verified</h4>
+                </div>
+                <p className="text-sm text-green-700">
+                  This batch is registered on the blockchain for complete transparency.
+                </p>
+                {batch.blockchain.transactionHash && (
+                  <p className="text-xs text-green-600 mt-1">
+                    TX: {batch.blockchain.transactionHash.substring(0, 20)}...
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Supply Chain Events */}
@@ -228,29 +254,31 @@ const BatchDetails = () => {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Pricing */}
+          {/* Batch Information Summary */}
           <div className="card">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Pricing Information</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Batch Summary</h3>
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-gray-600">Farm Gate Price</span>
-                <span className="font-semibold">${batch.pricing.farmGatePrice}</span>
+                <span className="text-gray-600">Batch ID</span>
+                <span className="font-semibold">{batch.batchId}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Wholesale Price</span>
-                <span className="font-semibold">${batch.pricing.wholesalePrice}</span>
+                <span className="text-gray-600">Produce Type</span>
+                <span className="font-semibold">{batch.produceType}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Retail Price</span>
-                <span className="font-semibold">${batch.pricing.retailPrice}</span>
+                <span className="text-gray-600">Quantity</span>
+                <span className="font-semibold">{batch.quantity} kg</span>
               </div>
-              <div className="border-t pt-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Total Margin</span>
-                  <span className="font-semibold text-primary-600">
-                    ${(batch.pricing.retailPrice - batch.pricing.farmGatePrice).toFixed(2)}
-                  </span>
-                </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Quality Grade</span>
+                <span className="font-semibold">Grade {batch.qualityGrade}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Status</span>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(batch.status).split(' ')[1]}`}>
+                  {batch.status.replace('_', ' ')}
+                </span>
               </div>
             </div>
           </div>
@@ -283,6 +311,36 @@ const BatchDetails = () => {
             </div>
           </div>
 
+          {/* QR Code */}
+          {batch.qrCode && (
+            <div className="card">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">QR Code</h3>
+              <div className="text-center">
+                <img 
+                  src={batch.qrCode.qrCodeDataURL} 
+                  alt="Batch QR Code"
+                  className="mx-auto border-2 border-gray-200 rounded-lg mb-4"
+                  style={{ width: '200px', height: '200px' }}
+                />
+                <p className="text-sm text-gray-600 mb-4">
+                  Scan this QR code to track this batch
+                </p>
+                <button
+                  onClick={() => {
+                    const link = document.createElement('a')
+                    link.href = batch.qrCode.qrCodeDataURL
+                    link.download = `batch-${batch.batchId}-qr.png`
+                    link.click()
+                  }}
+                  className="w-full btn-outline inline-flex items-center justify-center"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download QR
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Actions */}
           <div className="card">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Actions</h3>
@@ -290,9 +348,11 @@ const BatchDetails = () => {
               <button className="w-full btn-primary">
                 Update Status
               </button>
-              <button className="w-full btn-outline">
-                Generate QR Code
-              </button>
+              {!batch.qrCode && (
+                <button className="w-full btn-outline">
+                  Generate QR Code
+                </button>
+              )}
               <button className="w-full btn-outline">
                 Export Data
               </button>

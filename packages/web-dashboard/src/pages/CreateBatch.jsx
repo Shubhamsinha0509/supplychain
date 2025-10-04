@@ -1,12 +1,14 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Package, Save } from 'lucide-react'
+import { ArrowLeft, Package, Save, QrCode, Download, Share2 } from 'lucide-react'
 import { useUser } from '../contexts/UserContext'
 
 const CreateBatch = () => {
   const navigate = useNavigate()
   const { user } = useUser()
   const [loading, setLoading] = useState(false)
+  const [showQRCode, setShowQRCode] = useState(false)
+  const [createdBatch, setCreatedBatch] = useState(null)
   const [formData, setFormData] = useState({
     produceType: '',
     quantity: '',
@@ -47,10 +49,13 @@ const CreateBatch = () => {
       if (response.ok) {
         const result = await response.json()
         console.log('Batch created:', result)
+        
+        // Store the created batch data
+        setCreatedBatch(result.data)
+        setShowQRCode(true)
+        
         // Show success message
-        alert('Batch created successfully!')
-        // Navigate to dashboard and trigger refresh
-        navigate('/dashboard', { state: { refresh: true } })
+        alert('Batch created successfully! QR code generated.')
       } else {
         throw new Error('Failed to create batch')
       }
@@ -245,6 +250,75 @@ const CreateBatch = () => {
           </button>
         </div>
       </form>
+
+      {/* QR Code Display Modal */}
+      {showQRCode && createdBatch && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-4">
+                <QrCode className="h-8 w-8 text-green-600 mr-2" />
+                <h3 className="text-2xl font-bold text-gray-900">Batch QR Code</h3>
+              </div>
+              
+              <p className="text-gray-600 mb-6">
+                Your batch has been created successfully! Here's the QR code for tracking.
+              </p>
+              
+              {/* QR Code Image */}
+              {createdBatch.qrCode && (
+                <div className="mb-6">
+                  <img 
+                    src={createdBatch.qrCode.qrCodeDataURL} 
+                    alt="Batch QR Code"
+                    className="mx-auto border-2 border-gray-200 rounded-lg"
+                    style={{ width: '250px', height: '250px' }}
+                  />
+                </div>
+              )}
+              
+              {/* Batch Info */}
+              <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
+                <h4 className="font-semibold text-gray-900 mb-2">Batch Information</h4>
+                <div className="space-y-1 text-sm text-gray-600">
+                  <p><span className="font-medium">Batch ID:</span> {createdBatch.batchId}</p>
+                  <p><span className="font-medium">Produce:</span> {createdBatch.produceType}</p>
+                  <p><span className="font-medium">Quantity:</span> {createdBatch.quantity} kg</p>
+                  <p><span className="font-medium">Quality:</span> Grade {createdBatch.qualityGrade}</p>
+                  <p><span className="font-medium">Location:</span> {createdBatch.location}</p>
+                </div>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => {
+                    setShowQRCode(false)
+                    navigate('/dashboard', { state: { refresh: true } })
+                  }}
+                  className="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  Close
+                </button>
+                {createdBatch.qrCode && (
+                  <button
+                    onClick={() => {
+                      const link = document.createElement('a')
+                      link.href = createdBatch.qrCode.qrCodeDataURL
+                      link.download = `batch-${createdBatch.batchId}-qr.png`
+                      link.click()
+                    }}
+                    className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download QR
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

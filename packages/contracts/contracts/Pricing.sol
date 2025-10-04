@@ -118,12 +118,11 @@ contract Pricing is AccessControl, ReentrancyGuard {
         uint256 _wholesalePrice,
         uint256 _retailPrice,
         uint256 _transportCost
-    ) external onlyRole(WHOLESALER_ROLE) validPrice(_farmGatePrice) validPrice(_retailPrice) {
+    ) external onlyRole(WHOLESALER_ROLE) validPrice(_farmGatePrice) validPrice(_retailPrice) validMargin(_farmGatePrice, _retailPrice) {
         require(_wholesalePrice >= _farmGatePrice, "Wholesale price must be >= farm gate price");
         require(_retailPrice >= _wholesalePrice, "Retail price must be >= wholesale price");
         
-        // Validate margin
-        validMargin(_farmGatePrice, _retailPrice);
+        // Validate margin is handled by the modifier
         
         uint256 margin = _retailPrice - _farmGatePrice;
         
@@ -153,7 +152,9 @@ contract Pricing is AccessControl, ReentrancyGuard {
         require(batchPrices[_batchId].timestamp > 0, "Batch pricing not set");
         
         uint256 farmGatePrice = batchPrices[_batchId].farmGatePrice;
-        validMargin(farmGatePrice, _newRetailPrice);
+        // Validate margin
+        uint256 margin = ((_newRetailPrice - farmGatePrice) * 100) / farmGatePrice;
+        require(margin <= MAX_MARGIN_PERCENTAGE, "Margin exceeds maximum allowed");
         
         batchPrices[_batchId].retailPrice = _newRetailPrice;
         batchPrices[_batchId].margin = _newRetailPrice - farmGatePrice;
