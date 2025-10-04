@@ -1,8 +1,11 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
+import { useUser } from '../contexts/UserContext'
 
 const Login = () => {
+  const { login } = useUser()
+  const navigate = useNavigate()
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -23,9 +26,22 @@ const Login = () => {
     
     // Simulate API call
     setTimeout(() => {
+      // For demo purposes, create a mock user
+      const userData = {
+        id: Date.now(),
+        name: 'Demo Farmer',
+        email: formData.email,
+        phone: '+1234567890',
+        location: 'Demo Farm, California',
+        farmName: 'Demo Farm',
+        userType: 'Farmer',
+        registrationDate: '2024-01-01',
+        createdAt: new Date().toISOString()
+      }
+      
+      login(userData)
       setLoading(false)
-      // Redirect to dashboard
-      window.location.href = '/dashboard'
+      navigate('/dashboard')
     }, 1000)
   }
 

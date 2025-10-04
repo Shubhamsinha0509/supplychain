@@ -84,7 +84,7 @@ const Home = () => {
         <div className="max-w-4xl mx-auto px-4 relative z-10">
           <div className={`transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
             <div className="flex items-center justify-center mb-4">
-              <Sparkles className="h-8 w-8 text-primary-600 animate-spin" />
+              <Sparkles className="h-8 w-8 text-primary-600" />
               <span className="ml-2 text-primary-600 font-semibold text-lg">Revolutionary Technology</span>
             </div>
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">

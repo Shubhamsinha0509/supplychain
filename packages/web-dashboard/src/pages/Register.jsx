@@ -1,8 +1,11 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Mail, Lock, User, Eye, EyeOff, Building } from 'lucide-react'
+import { useUser } from '../contexts/UserContext'
 
 const Register = () => {
+  const { login } = useUser()
+  const navigate = useNavigate()
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -10,7 +13,9 @@ const Register = () => {
     password: '',
     confirmPassword: '',
     role: 'farmer',
-    businessName: ''
+    businessName: '',
+    phone: '',
+    location: ''
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -25,13 +30,31 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    
+    if (formData.password !== formData.confirmPassword) {
+      alert('Passwords do not match')
+      return
+    }
+    
     setLoading(true)
     
     // Simulate API call
     setTimeout(() => {
+      const userData = {
+        id: Date.now(),
+        name: `${formData.firstName} ${formData.lastName}`,
+        email: formData.email,
+        phone: formData.phone,
+        location: formData.location,
+        farmName: formData.businessName,
+        userType: formData.role.charAt(0).toUpperCase() + formData.role.slice(1),
+        registrationDate: new Date().toISOString().split('T')[0],
+        createdAt: new Date().toISOString()
+      }
+      
+      login(userData)
       setLoading(false)
-      // Redirect to dashboard
-      window.location.href = '/dashboard'
+      navigate('/dashboard')
     }, 1000)
   }
 
@@ -156,6 +179,36 @@ const Register = () => {
                 </div>
               </div>
             )}
+
+            <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                Phone Number
+              </label>
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                placeholder="Enter your phone number"
+                value={formData.phone}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="location" className="block text-sm font-medium text-gray-700">
+                Location
+              </label>
+              <input
+                id="location"
+                name="location"
+                type="text"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                placeholder="Enter your location"
+                value={formData.location}
+                onChange={handleChange}
+              />
+            </div>
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
